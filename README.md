@@ -266,6 +266,8 @@ The model can call:
 
 The first DM round still forces tool use so the bot responds through the tool protocol, but all tools are visible immediately.
 
+The owner can also DM `!export_state` to receive `identity.md`, `owner.md`, and `journal.md` as Discord file attachments. This command is handled before the LLM path and is still gated by `OWNER_DISCORD_ID`.
+
 ## Evals
 
 Run all scenarios without the judge:

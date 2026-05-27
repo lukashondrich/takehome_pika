@@ -38,6 +38,7 @@ INNER_LIFE_MAX_SECONDS = 3 * 60*40
 INNER_LIFE_AFTER_REPLY_SECONDS = 8 * 60 # 8 mins
 DISCORD_CHUNK_LIMIT = 1900
 MAX_AGENT_ROUNDS = 12
+EXPORT_STATE_COMMAND = "!export_state"
 
 ANTHROPIC_TIMEOUT_SECONDS = 60
 ANTHROPIC_RETRY_ATTEMPTS = 3
@@ -576,6 +577,26 @@ class DMBot(discord.Client):
         self.last_outreach_at = time.time()
         return "sent"
 
+    async def _send_state_export(self, channel: discord.abc.Messageable) -> None:
+        paths = [
+            memory.identity_file(),
+            memory.owner_file(),
+            memory.journal_file(),
+        ]
+        files = [
+            discord.File(str(path), filename=path.name)
+            for path in paths
+            if path.exists()
+        ]
+        if not files:
+            await channel.send("No state files found yet.")
+            return
+        try:
+            await channel.send("Current bot state files:", files=files)
+        finally:
+            for file in files:
+                file.close()
+
     async def run_agent(
         self,
         seed_messages: list[dict],
@@ -727,6 +748,9 @@ class DMBot(discord.Client):
         if message.author.id != OWNER_DISCORD_ID:
             return
         if not isinstance(message.channel, discord.DMChannel):
+            return
+        if message.content.strip() == EXPORT_STATE_COMMAND:
+            await self._send_state_export(message.channel)
             return
 
         self.last_user_message_at = message.created_at.timestamp()
